@@ -15,7 +15,7 @@ use crate::modules::users::user_handler::register;
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .route("/human", web::post().to(register))
+            .route("/register", web::post().to(register))
     })
         .bind("127.0.0.1:8080")?
         .run()

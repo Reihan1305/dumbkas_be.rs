@@ -1,14 +1,15 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use uuid:: Uuid;
 use crate::schema::users; // Pastikan path ke schema sudah benar
 
 // Struktur untuk user yang sudah ada di database (untuk query)
 #[derive(Debug, Deserialize, Queryable, Serialize)]
 pub struct User {
-    pub id: String,
+    pub id: Uuid,
     pub name: String,
     pub email: String,
-    pub password: String,
+    pub password: String
 }
 
 // Struktur untuk user baru yang akan dimasukkan ke database (untuk insert)
