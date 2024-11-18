@@ -1,4 +1,4 @@
-use crate::config::db::establish_connection;
+use crate::{config::db::establish_connection, modules::users::user_model::User};
 use actix_web::{web, HttpResponse, Result};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -8,10 +8,12 @@ use argon2::{
         rand_core::OsRng,
         PasswordHasher, SaltString
     },
-    Argon2
+    Argon2, PasswordVerifier
 };
 use serde_json::json;
 use uuid::Uuid;
+
+use super::user_model::LoginUser;
 
 #[derive(Serialize, Debug, Queryable, Deserialize)]
 pub struct RegisterPayload {
@@ -67,4 +69,52 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
             })))
         }
     }
+}
+
+
+pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
+    use crate::schema::users::dsl::*;
+    let mut connection = establish_connection();
+
+    let user = users
+        .filter(email.eq(&login_data.email))
+        .select((id, name, email, password))
+        .first::<User>(&mut connection);
+
+    match user {
+        Ok(user) => {
+            let password_hash = user.password;
+            let argon2 = Argon2::default();
+            let parsed_hash = argon2::PasswordHash::new(&password_hash).unwrap();
+            let result = argon2.verify_password(login_data.password.as_bytes(), &parsed_hash);
+            match result {
+                Ok(_) => {
+                    let user_payload = RegisterPayload {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                    };
+                    Ok(HttpResponse::Ok().json(json!({
+                        "message": "User logged in successfully",
+                        "data": user_payload
+                    })))
+                }
+                Err(err) => {
+                    println!("Error logging in user: {}", err.to_string().contains("duplicate key"));
+                    Ok(HttpResponse::InternalServerError().json(json!({
+                        "message": "Failed to login user",
+                        "error": err.to_string()
+                    })))
+                }
+            }
+        },
+        Err(err) => {
+            println!("Error logging in user: {}", err.to_string().contains("duplicate key"));
+            Ok(HttpResponse::InternalServerError().json(json!({
+                "message": "Failed to login user",
+                "error": err.to_string()
+            })))
+        }
+    }    
+
 }

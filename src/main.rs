@@ -4,6 +4,7 @@ mod modules{
         pub mod user_model;
     }
 }
+
 mod schema;
 mod config;
 use actix_web::{web, App, HttpServer};
