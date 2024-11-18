@@ -2,7 +2,7 @@ use actix_web::{web,http::header::HeaderValue};
 use jsonwebtoken::{decode,encode, DecodingKey, TokenData, Validation};
 
 use crate::config::db::establish_connection;
-use crate::modules::users::user_model::{UserToken};
+use crate::modules::users::user_model::UserToken;
 
 pub fn decodeToken (token:String) -> Result<TokenData<UserToken>, String> {
     let validation = Validation::default();
