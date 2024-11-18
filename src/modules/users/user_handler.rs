@@ -1,4 +1,4 @@
-use crate::{config::db::establish_connection, modules::users::user_model::User};
+use crate::{config::db::establish_connection, modules::users::user_model::{User, UserToken}};
 use actix_web::{web, HttpResponse, Result};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,6 +14,8 @@ use serde_json::json;
 use uuid::Uuid;
 
 use super::user_model::LoginUser;
+
+use crate::utils::jwt::TokenClaims;
 
 #[derive(Serialize, Debug, Queryable, Deserialize)]
 pub struct RegisterPayload {
@@ -48,14 +50,15 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
 
     match inserted_user {
         Ok(user) => {
-            let user_payload = RegisterPayload {
+            let user_payload: UserToken = UserToken{
                 id: user.id,
                 name: user.name,
-                email: user.email,
+                email: user.email
             };
+            let token:String = TokenClaims::generate_token(user_payload).unwrap();
             Ok(HttpResponse::Ok().json(json!({
                 "message": "User registered successfully",
-                "data": user_payload
+                "data": token
             })))
         }
         Err(err) => {
