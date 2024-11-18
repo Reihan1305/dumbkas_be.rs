@@ -50,19 +50,17 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
 
     match inserted_user {
         Ok(user) => {
-            let user_payload: UserToken = UserToken{
+            let user_payload: RegisterPayload = RegisterPayload{
                 id: user.id,
                 name: user.name,
                 email: user.email
             };
-            let token:String = TokenClaims::generate_token(user_payload).unwrap();
             Ok(HttpResponse::Ok().json(json!({
                 "message": "User registered successfully",
-                "data": token
+                "data": user_payload
             })))
         }
         Err(err) => {
-            println!("Error inserting user: {}", err.to_string().contains("duplicate key"));
             if err.to_string().contains("duplicate key"){
                 return Ok(HttpResponse::BadRequest().json(json!({"message": "Failed to register user","message": "email alredy exist"})))
             }
@@ -92,14 +90,15 @@ pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
             let result = argon2.verify_password(login_data.password.as_bytes(), &parsed_hash);
             match result {
                 Ok(_) => {
-                    let user_payload = RegisterPayload {
+                    let user_payload:UserToken = UserToken {
                         id: user.id,
                         name: user.name,
                         email: user.email,
                     };
+                let token:String = TokenClaims::generate_token(user_payload).unwrap();
                     Ok(HttpResponse::Ok().json(json!({
                         "message": "User logged in successfully",
-                        "data": user_payload
+                        "data": token
                     })))
                 }
                 Err(err) => {
