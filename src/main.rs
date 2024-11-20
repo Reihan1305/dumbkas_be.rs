@@ -13,7 +13,8 @@ mod utils;
 mod schema;
 mod config;
 
-
+use crate::middlewares::auth_middleware::Authentication;
+use actix_web::web::scope;
 use actix_web::{web, App, HttpServer};
 use modules::users::user_handler::login;
 use crate::modules::users::user_handler::register;
@@ -26,9 +27,12 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/register", web::post().to(register))
             .route("/login", web::post().to(login))
-            .wrap(middlewares::auth_middleware::Authentication)
-            .route("/create_transaction", web::post().to(create_transaction))
-    })
+            .service(
+                scope("/transactions")
+                .wrap(Authentication)
+                .route("/create", web::post().to(create_transaction))
+            )
+            })
         .bind("127.0.0.1:8080")?
         .run()
         .await
