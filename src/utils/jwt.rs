@@ -1,4 +1,4 @@
-use jsonwebtoken::{Header, encode, EncodingKey};
+use jsonwebtoken::{encode, EncodingKey, Header, TokenData,decode,DecodingKey,Validation ,errors::Error as JwtError};
 
 use crate::modules::users::user_model::UserToken;
 use serde::{Deserialize, Serialize};
@@ -28,19 +28,7 @@ impl TokenClaims {
 }
 
 
-// pub fn decodeToken (token:String) -> Result<TokenData<UserToken>, String> {
-//     let validation = Validation::default();
-//     let key = DecodingKey::from_secret("secret".as_bytes());
-//     let token_data = decode::<UserToken>(&token, &key, &validation);
-//     match token_data {
-//         Ok(token_data) => Ok(token_data),
-//         Err(err) => Err(err.to_string())
-//     }
-// }
-
-// pub fn verifyToken (
-//     token_data:&TokenData<UserToken>,
-//     pool: &web::Data<Pool>,
-// ) -> Result <String, String> {
-    
-// }
+pub fn decodeToken(token: String) -> Result<TokenData<UserToken>, String> {
+    decode::<UserToken>(&token, &DecodingKey::from_secret("secret_key".as_bytes()), &Validation::default())
+        .map_err(|e: JwtError| e.to_string())  // Ubah error tipe JwtError menjadi String
+}
