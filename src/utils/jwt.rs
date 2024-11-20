@@ -27,8 +27,13 @@ impl TokenClaims {
     }
 }
 
-
-pub fn decodeToken(token: String) -> Result<TokenData<UserToken>, String> {
-    decode::<UserToken>(&token, &DecodingKey::from_secret("secret_key".as_bytes()), &Validation::default())
-        .map_err(|e: JwtError| e.to_string())  // Ubah error tipe JwtError menjadi String
+pub fn decode_token(token: String) -> Result<TokenData<UserToken>, String> {
+    let user = decode::<UserToken>(
+        &token,
+        &DecodingKey::from_secret("secret_key".as_bytes()),
+        &Validation::default(),
+    ).map_err(|e: JwtError| e.to_string());
+        decode::<UserToken>(&token, &DecodingKey::from_secret("secret_key".as_bytes()), &Validation::default())
+        .map_err(|e: JwtError| e.to_string())
 }
+

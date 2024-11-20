@@ -4,11 +4,12 @@ mod modules{
         pub mod user_model;
     }
 }
-
+mod middlewares;
 mod utils;
-
 mod schema;
 mod config;
+
+
 use actix_web::{web, App, HttpServer};
 use modules::users::user_handler::login;
 use crate::modules::users::user_handler::register;
