@@ -3,6 +3,10 @@ mod modules{
         pub mod user_handler;
         pub mod user_model;
     }
+    pub mod transactions {
+        pub mod transaction_handler;
+        pub mod transaction_model;
+    }
 }
 mod middlewares;
 mod utils;
