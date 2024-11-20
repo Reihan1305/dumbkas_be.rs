@@ -43,13 +43,11 @@ where
         let mut authentication_pass = false;
         let mut user_id: Option<Uuid> = None;
 
-        // Check Authorization header for Bearer token
         if let Some(header) = req.headers().get("Authorization") {
             if let Ok(str_header) = header.to_str() {
                 if str_header.starts_with("Bearer ") {
                     let token = &str_header[7..];
 
-                    // Decode the token and get user id
                     if let Ok(user_token) = decode_token(token.to_string()) {
                         authentication_pass = true;
                         user_id = Some(user_token.claims.id);
@@ -58,15 +56,12 @@ where
             }
         }
 
-        // If authentication failed, return Unauthorized response
         if !authentication_pass {
             let (request, _pl) = req.into_parts();
             let response = HttpResponse::Unauthorized().finish();
             
-            // Bungkus response body dalam EitherBody
             let response = response.map_into_right_body();
         
-            // Kembalikan response yang sudah dibungkus
             return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
         }
 
