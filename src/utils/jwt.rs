@@ -1,6 +1,6 @@
 use jsonwebtoken::{encode, EncodingKey, Header, TokenData,decode,DecodingKey,Validation ,errors::Error as JwtError};
 
-use crate::modules::users::user_model::UserToken;
+use crate::modules::users::user_model::{JwtUserToken, UserToken};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -27,13 +27,12 @@ impl TokenClaims {
     }
 }
 
-pub fn decode_token(token: String) -> Result<TokenData<UserToken>, String> {
-    let user = decode::<UserToken>(
+pub fn decode_token(token: String) -> Result<TokenData<JwtUserToken>, String> {
+    let user = decode::<JwtUserToken>(
         &token,
         &DecodingKey::from_secret("secret_key".as_bytes()),
         &Validation::default(),
     ).map_err(|e: JwtError| e.to_string());
-        decode::<UserToken>(&token, &DecodingKey::from_secret("secret_key".as_bytes()), &Validation::default())
-        .map_err(|e: JwtError| e.to_string())
+    user
 }
 

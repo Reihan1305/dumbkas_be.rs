@@ -18,6 +18,13 @@ pub struct UserToken {
     pub name : String
 }
 
+#[derive(Debug,Deserialize,Serialize)]
+pub struct JwtUserToken{
+        pub user: UserToken,  
+        pub iat: i64,    
+        pub exp: i64
+}
+
 #[derive(Queryable, Insertable, Deserialize, Serialize)]
 #[diesel(table_name = users)]  
 pub struct NewUser {

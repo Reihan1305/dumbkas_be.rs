@@ -1,21 +1,35 @@
 use crate::{config::db::establish_connection, modules::transactions::transaction_model::{NewTransaction, Transaction}};
-use actix_web::{ web, HttpMessage, HttpRequest, HttpResponse, Result};
+use actix_web::{ web::{self, ReqData}, HttpMessage, HttpRequest, HttpResponse, Result};
 use diesel::prelude::*;
 use serde_json::json;
 use uuid::Uuid;
 
 
-pub async fn create_transaction(new_transaction: web::Json<NewTransaction>, req: HttpRequest) -> Result<HttpResponse> {
+pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
     use crate::schema::transactions::dsl::*;
+    // let mut iduser: Option<Uuid> = None;
+    // println!("{:?}",req);
+    // if let Some(userid) = req.extensions().get::<Uuid>() {
+    //     // If userid is found, clone it into `userid`
+    //     iduser = Some(userid.clone());
+    // } else {
+    //     // If userid is not found, return Unauthorized response and exit early
+    //     HttpResponse::Unauthorized().finish();
+    // }
 
-    let userid:Uuid = match req.extensions().get::<Uuid>() {
-        Some(uid) => uid.clone(),
-        None => return Ok(HttpResponse::Unauthorized().json("User not authenticated")),
-    };
-
-    let mut new_transaction = new_transaction.into_inner();
-    new_transaction.user_id = userid;
-
+    // // Now, `userid` is guaranteed to be initialized
+    // if let Some(uod) = iduser {
+    //     println!("{}",uod ); // Prints the user ID
+    // }
+    // new_transaction.userid = uod;
+    println!("{:?}", req.extensions().get::<String>());
+    if let Some(userid) = req.extensions().get::<String>() {
+        HttpResponse::Ok().body(format!("Access granted for user: {}", userid));
+    } else {
+        HttpResponse::Unauthorized().body("Authorization header missing or invalid");
+    }
+    let new_transaction = new_transaction.into_inner();
+    
     let mut connection = establish_connection();
 
     let inserted_transaction: Result<Transaction, diesel::result::Error> = diesel::insert_into(transactions)
