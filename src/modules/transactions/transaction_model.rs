@@ -1,12 +1,12 @@
-use diesel::{ expression::AsExpression, prelude::*};
+use diesel::prelude::*;
 use serde::{Deserialize,Serialize};
 use crate::schema::transactions;
 use uuid::Uuid;
 
-pub enum TransactionType {
-    Income,
-    Expense,
-}
+// pub enum TransactionType {
+//     Income,
+//     Expense,
+// }
 
 #[derive(Debug, Queryable,Deserialize,Serialize)]
 pub struct Transaction {
@@ -30,11 +30,11 @@ pub struct NewTransaction {
     pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-#[derive(Deserialize,Queryable)]
-#[diesel(table_name = transactions)]
-pub struct UpdateTransaction {
-    pub total_transaction: Option<i32>,
-    pub type_transaction: Option<String>,
-    pub description: Option<String>,
-    pub updated_at: chrono::NaiveDateTime,
-}
+// #[derive(Deserialize,Queryable)]
+// #[diesel(table_name = transactions)]
+// pub struct UpdateTransaction {
+//     pub total_transaction: Option<i32>,
+//     pub type_transaction: Option<String>,
+//     pub description: Option<String>,
+//     pub updated_at: chrono::NaiveDateTime,
+// }

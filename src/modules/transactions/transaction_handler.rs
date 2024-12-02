@@ -1,8 +1,7 @@
 use crate::{config::db::establish_connection, modules::transactions::transaction_model::{NewTransaction, Transaction}};
-use actix_web::{ web::{self, ReqData}, HttpMessage, HttpRequest, HttpResponse, Result};
+use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Result};
 use diesel::prelude::*;
 use serde_json::json;
-use uuid::Uuid;
 
 
 pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
@@ -22,7 +21,7 @@ pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:H
     //     println!("{}",uod ); // Prints the user ID
     // }
     // new_transaction.userid = uod;
-    println!("{:?}", req.extensions().get::<String>());
+    println!("{:?}", req.extensions().get::<String>().unwrap_or(&"novalue".to_string()));
     if let Some(userid) = req.extensions().get::<String>() {
         HttpResponse::Ok().body(format!("Access granted for user: {}", userid));
     } else {

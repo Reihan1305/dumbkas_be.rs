@@ -1,10 +1,13 @@
-use std::future::{ready, Ready};
-
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
+    Error, HttpMessage, HttpResponse, ResponseError,
 };
-use futures::future::LocalBoxFuture;
+use futures::future::{ok, LocalBoxFuture, Ready};
+use serde_json::json;
+use std::fmt;
+
+use crate::utils::jwt::decode_token;
+
 pub struct Authentication;
 
 impl<S, B> Transform<S, ServiceRequest> for Authentication
@@ -20,7 +23,7 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthMiddleware { service }))
+        ok(AuthMiddleware { service })
     }
 }
 
@@ -41,15 +44,42 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        println!("Hi from start. You requested: {}", req.path());
+        let auth_header = req.headers().get("AUTHORIZATION").cloned();
 
-        let fut = self.service.call(req);
+        if let Some(auth_value) = auth_header {
+            if let Ok(auth_str) = auth_value.to_str() {
+                if auth_str.starts_with("Bearer ") {
+                    let token = auth_str.trim_start_matches("Bearer ").trim();
+                    let decode_token = decode_token(token.to_string()).expect("token invalid");
+                     
+                    req.extensions_mut().insert(decode_token.claims.user.id);
+                        let fut = self.service.call(req);
+                    println!("{:?}",decode_token.claims.user.id);
+                        return Box::pin(async move {
+                            let res = fut.await?;
+                            Ok(res)
+                        });
 
-        Box::pin(async move {
-            let res = fut.await?;
+                }
+            }
+        }
 
-            println!("Hi from response");
-            Ok(res)
-        })
+        Box::pin(async { Err(UnauthorizedError.into()) })
+    }
+}
+
+#[derive(Debug)]
+struct UnauthorizedError;
+
+impl fmt::Display for UnauthorizedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Unauthorized: Invalid or missing token")
+    }
+}
+
+impl ResponseError for UnauthorizedError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::Unauthorized()
+            .json(json!({"error": "Unauthorized", "message": self.to_string()}))
     }
 }
