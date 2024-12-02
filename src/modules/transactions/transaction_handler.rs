@@ -1,9 +1,9 @@
 use crate::{config::db::establish_connection, modules::transactions::transaction_model::{NewTransaction, Transaction}};
-use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Result};
+use actix_web::{post, web, HttpMessage, HttpRequest, HttpResponse, Result};
 use diesel::prelude::*;
 use serde_json::json;
-
-
+use crate::Authentication;
+#[post("")]
 pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
     use crate::schema::transactions::dsl::*;
     // let mut iduser: Option<Uuid> = None;
@@ -45,4 +45,12 @@ pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:H
         }
         Err(e) => Ok(HttpResponse::InternalServerError().json(format!("Error creating transaction: {}", e))),
     }
+}
+
+pub fn config(conf:&mut web::ServiceConfig){
+    let scope = web::scope("/transaction")
+    .wrap(Authentication)
+    .service(create_transaction);
+
+    conf.service(scope);
 }

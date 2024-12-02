@@ -1,5 +1,5 @@
 use crate::{config::db::establish_connection, modules::users::user_model::{User, UserToken}};
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{post, web, HttpResponse, Result};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::modules::users::user_model::NewUser;
@@ -24,6 +24,7 @@ pub struct RegisterPayload {
     email: String,
 }
 
+#[post("/register")]
 pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
     use crate::schema::users::dsl::*;
 
@@ -72,7 +73,7 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
     }
 }
 
-
+#[post("/login")]
 pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
     use crate::schema::users::dsl::*;
     let mut connection = establish_connection();
@@ -119,4 +120,12 @@ pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
         }
     }    
 
+}
+
+pub fn user_config(conf:&mut web::ServiceConfig){
+    let scope = web::scope("/auth")
+        .service(login)
+        .service(register);
+
+    conf.service(scope);
 }

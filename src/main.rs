@@ -14,10 +14,8 @@ mod schema;
 mod config;
 
 use crate::middlewares::auth_middleware::Authentication;
-use actix_web::{web, App,HttpServer};
-use crate::modules::transactions::transaction_handler::create_transaction;
-use modules::users::user_handler::login;
-use crate::modules::users::user_handler::register;
+use actix_web::{App,HttpServer};
+use modules::{transactions::transaction_handler, users::user_handler};
 
 // async fn secure_route(id:Uuid) -> HttpResponse {
 //     // Mengambil ID pengguna yang sudah disisipkan di extensions
@@ -32,10 +30,8 @@ use crate::modules::users::user_handler::register;
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .route("/register", web::post().to(register))
-            .route("/login", web::post().to(login))
-            .wrap(Authentication)
-            .route("/transaction", web::post().to(create_transaction))
+            .configure(user_handler::user_config)
+            .configure(transaction_handler::config)
             })
         .bind("127.0.0.1:8080")?
         .run()
