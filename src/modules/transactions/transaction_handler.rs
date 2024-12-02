@@ -3,34 +3,43 @@ use actix_web::{post, web, HttpMessage, HttpRequest, HttpResponse, Result};
 use diesel::prelude::*;
 use serde_json::json;
 use crate::Authentication;
-#[post("")]
-pub async fn create_transaction(new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
-    use crate::schema::transactions::dsl::*;
-    // let mut iduser: Option<Uuid> = None;
-    // println!("{:?}",req);
-    // if let Some(userid) = req.extensions().get::<Uuid>() {
-    //     // If userid is found, clone it into `userid`
-    //     iduser = Some(userid.clone());
-    // } else {
-    //     // If userid is not found, return Unauthorized response and exit early
-    //     HttpResponse::Unauthorized().finish();
-    // }
+use crate::schema::users;
+use uuid::Uuid;
+use crate::modules::users::user_model::User;
 
-    // // Now, `userid` is guaranteed to be initialized
-    // if let Some(uod) = iduser {
-    //     println!("{}",uod ); // Prints the user ID
-    // }
-    // new_transaction.userid = uod;
-    println!("{:?}", req.extensions().get::<String>().unwrap_or(&"novalue".to_string()));
-    if let Some(userid) = req.extensions().get::<String>() {
-        HttpResponse::Ok().body(format!("Access granted for user: {}", userid));
-    } else {
-        HttpResponse::Unauthorized().body("Authorization header missing or invalid");
-    }
-    let new_transaction = new_transaction.into_inner();
-    
+
+#[post("")]
+pub async fn create_transaction(mut new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
+    use crate::schema::transactions::dsl::*;
     let mut connection = establish_connection();
 
+    let user_id_str = req
+    .extensions()
+    .get::<Uuid>()
+    .cloned()
+    .unwrap();
+
+    println!("{:?}",user_id_str);
+
+    let userid =  user_id_str ;
+    let user_login:Result<Option<User>,HttpResponse> = users::table
+                .find(userid)
+                .first::<User>(&mut connection)
+                .optional()
+                .map_err(|e| {
+                    HttpResponse::InternalServerError().json(json!({
+                        "error": format!("Database error: {}", e)
+                    }))
+                });
+    if user_login.is_err(){
+        return Ok(HttpResponse::NotFound().json(json!({
+            "error": "User not found"
+        })));
+    };
+
+    new_transaction.user_id = Some(userid);
+    let new_transaction = new_transaction.into_inner();
+    
     let inserted_transaction: Result<Transaction, diesel::result::Error> = diesel::insert_into(transactions)
     .values(&new_transaction)
     .returning((id,user_id,total_transaction,type_transaction,description,created_at,updated_at))

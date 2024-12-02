@@ -22,7 +22,7 @@ pub struct Transaction {
 #[derive(Queryable,Deserialize,Insertable,Serialize)]
 #[diesel(table_name = transactions)]
 pub struct NewTransaction {
-    pub user_id: Uuid,
+    pub user_id: Option<Uuid>,
     pub total_transaction: i32,
     pub type_transaction:String,
     pub description: String,

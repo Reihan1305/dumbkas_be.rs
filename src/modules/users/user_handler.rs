@@ -80,7 +80,7 @@ pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
 
     let user = users
         .filter(email.eq(&login_data.email))
-        .select((id, name, email, password))
+        .select((id, name, email, password,created_at))
         .first::<User>(&mut connection);
 
     match user {

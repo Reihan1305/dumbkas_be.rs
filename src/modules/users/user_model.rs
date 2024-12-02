@@ -8,7 +8,8 @@ pub struct User {
     pub id: Uuid,
     pub name: String,
     pub email: String,
-    pub password: String
+    pub password: String,
+    pub created_at:Option<chrono::NaiveDateTime>
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -54,7 +54,6 @@ where
                      
                     req.extensions_mut().insert(decode_token.claims.user.id);
                         let fut = self.service.call(req);
-                    println!("{:?}",decode_token.claims.user.id);
                         return Box::pin(async move {
                             let res = fut.await?;
                             Ok(res)
