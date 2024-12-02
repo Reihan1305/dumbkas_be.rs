@@ -1,11 +1,20 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "transactiontype"))]
+    pub struct Transactiontype;
+}
+
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Transactiontype;
+
     transactions (id) {
         id -> Uuid,
         user_id -> Uuid,
         total_transaction -> Int4,
-        type_transaction -> Text,
+        type_transaction -> Transactiontype,
         #[max_length = 225]
         description -> Varchar,
         created_at -> Nullable<Timestamp>,

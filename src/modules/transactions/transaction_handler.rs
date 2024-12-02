@@ -1,4 +1,4 @@
-use crate::{config::db::establish_connection, modules::transactions::transaction_model::{NewTransaction, Transaction}};
+use crate::{config::db::establish_connection, modules::transactions::transaction_model::{NewTransaction,TransactionType, Transaction}};
 use actix_web::{post, web, HttpMessage, HttpRequest, HttpResponse, Result};
 use diesel::prelude::*;
 use serde_json::json;
@@ -7,21 +7,17 @@ use crate::schema::users;
 use uuid::Uuid;
 use crate::modules::users::user_model::User;
 
-
 #[post("")]
 pub async fn create_transaction(mut new_transaction: web::Json<NewTransaction>,req:HttpRequest) -> Result<HttpResponse> {
     use crate::schema::transactions::dsl::*;
     let mut connection = establish_connection();
 
-    let user_id_str = req
+    let userid = req
     .extensions()
     .get::<Uuid>()
     .cloned()
     .unwrap();
 
-    println!("{:?}",user_id_str);
-
-    let userid =  user_id_str ;
     let user_login:Result<Option<User>,HttpResponse> = users::table
                 .find(userid)
                 .first::<User>(&mut connection)
@@ -38,6 +34,16 @@ pub async fn create_transaction(mut new_transaction: web::Json<NewTransaction>,r
     };
 
     new_transaction.user_id = Some(userid);
+
+    match new_transaction.type_transaction{
+        TransactionType::Credit | TransactionType::Debit => () ,
+        _ => {
+            return Ok(HttpResponse::BadRequest().json(json!({
+                "error": "Invalid transaction type"
+            })));
+        }
+    };
+
     let new_transaction = new_transaction.into_inner();
     
     let inserted_transaction: Result<Transaction, diesel::result::Error> = diesel::insert_into(transactions)
