@@ -1,7 +1,8 @@
-use crate::{config::db::establish_connection, modules::users::user_model::{User, UserToken}};
+use crate::{modules::users::user_model::{User, UserToken}, DbPool};
 use actix_web::{post, web, HttpResponse, Result};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use crate::modules::users::user_model::NewUser;
 use argon2::{
     password_hash::{
@@ -25,7 +26,7 @@ pub struct RegisterPayload {
 }
 
 #[post("/register")]
-pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
+pub async fn register(new_user: web::Json<NewUser>,data:web::Data<DbPool>) -> Result<HttpResponse> {
     use crate::schema::users::dsl::*;
 
     let salt: SaltString = SaltString::generate(&mut OsRng);
@@ -40,9 +41,12 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
     };
 
     let mut new_user = new_user.into_inner();
+    if let Err(errors) = new_user.validate() {
+        return Ok(HttpResponse::BadRequest().json(errors));
+    }
     new_user.password = password_hash;
 
-    let mut connection = establish_connection();
+    let mut connection = data.get().expect("can't connect to database");
 
     let inserted_user: Result<RegisterPayload, diesel::result::Error> = diesel::insert_into(users)
         .values(&new_user)
@@ -74,9 +78,9 @@ pub async fn register(new_user: web::Json<NewUser>) -> Result<HttpResponse> {
 }
 
 #[post("/login")]
-pub async fn login(login_data :web::Json<LoginUser>) -> Result<HttpResponse> {
+pub async fn login(login_data :web::Json<LoginUser>,data:web::Data<DbPool>) -> Result<HttpResponse> {
     use crate::schema::users::dsl::*;
-    let mut connection = establish_connection();
+    let mut connection = data.get().expect("cant connect to database");
 
     let user = users
         .filter(email.eq(&login_data.email))

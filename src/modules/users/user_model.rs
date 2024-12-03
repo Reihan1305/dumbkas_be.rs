@@ -2,6 +2,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid:: Uuid;
 use crate::schema::users;
+use validator::Validate;
 
 #[derive(Debug, Deserialize, Queryable, Serialize)]
 pub struct User {
@@ -21,15 +22,17 @@ pub struct UserToken {
 
 #[derive(Debug,Deserialize,Serialize)]
 pub struct JwtUserToken{
-        pub user: UserToken,  
+        pub user: UserToken,
         pub iat: i64,    
         pub exp: i64
 }
 
-#[derive(Queryable, Insertable, Deserialize, Serialize)]
+#[derive(Queryable, Insertable,Validate, Deserialize, Serialize)]
 #[diesel(table_name = users)]  
 pub struct NewUser {
+    #[validate(length(min = 1,message="please input yurname"))]
     pub name: String,
+    #[validate(email(message = "invalid email"))]
     pub email: String,
     pub password: String,
 }
@@ -48,3 +51,4 @@ pub struct LoginUser {
 //     pub email: Option<String>,
 //     pub password: Option<String>,
 // }
+
